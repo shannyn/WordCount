@@ -35,6 +35,13 @@ class Pref:
 			Pref.splitRx            = re.compile(Pref.splitRx, re.U)
 			Pref.splitRx            = Pref.splitRx.findall
 
+		Pref.chnWrdRx			= re.compile(s.get('chinese_word_regexp', "[\u4e00-\u9fff]+"), re.U)
+		Pref.chnWrdRx			= Pref.chnWrdRx.match
+		Pref.chnSplitRx                = s.get('chinese_word_split', "[\u4e00-\u9fff]+")
+		if Pref.chnSplitRx:
+			Pref.chnSplitRx            = re.compile(Pref.chnSplitRx, re.U)
+			Pref.chnSplitRx            = Pref.chnSplitRx.findall
+
 		Pref.enable_live_count      = s.get('enable_live_count', True)
 		Pref.enable_readtime        = s.get('enable_readtime', False)
 		Pref.enable_line_word_count = s.get('enable_line_word_count', False)
@@ -284,7 +291,15 @@ class WordCountThread(threading.Thread):
 		# Pref.elapsed_time = end = time.time() - begin;
 		# print ('Benchmark: '+str(end))
 
-		return words
+		# chinesewords
+		chnWrdRx = Pref.chnWrdRx
+		chnSplitRx = Pref.chnSplitRx
+		if  chnSplitRx:
+			chnWords = sum([len(x) for x in chnSplitRx(content) if False == x.isdigit() and chnWrdRx(x)])
+		else:
+			chnWords = sum([len(x) for x in content.replace("'", '').replace('—', ' ').replace('–', ' ').replace('-', ' ').split() if False == x.isdigit() and chnWrdRx(x)])
+
+		return words + chnWords
 
 def word_count_loop():
 	word_count = WordCount().run
